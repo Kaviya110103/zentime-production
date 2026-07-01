@@ -36,7 +36,7 @@ const WalkthroughScreen = () => {
 
   const goToLogin = async () => {
     await AsyncStorage.setItem(WALKTHROUGH_DONE_KEY, 'true');
-    router.replace('/EmployeeLogin');
+    router.replace('/ThemePreference');
   };
 
   const handleNext = async () => {

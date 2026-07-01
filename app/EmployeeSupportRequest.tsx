@@ -9,11 +9,13 @@ import BottomNavBar from '../components/BottomNavBar';
 import { AppText as Text, AppTextInput as TextInput } from '../components/AppTypography';
 import { EmployeeContext } from '../context/EmployeeContext';
 import { buildApiUrl } from '../lib/api';
+import { useAppTheme } from '../context/AppThemeContext';
 
 type SupportTab = 'attendance' | 'general';
 
 export default function EmployeeSupportRequest() {
   const { employee } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
   const [activeTab, setActiveTab] = useState<SupportTab>('attendance');
   const [attendanceDate, setAttendanceDate] = useState('');
   const [timeIn, setTimeIn] = useState('');
@@ -133,7 +135,7 @@ export default function EmployeeSupportRequest() {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={['#7726B9', '#351153']}
         style={styles.header}
@@ -148,29 +150,29 @@ export default function EmployeeSupportRequest() {
 
       <KeyboardAvoidingView style={styles.body} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.tabs}>
+          <View style={[styles.tabs, { backgroundColor: isDark ? '#1f2937' : '#EDE9FE' }]}>
             <TouchableOpacity
               style={[styles.tabButton, activeTab === 'attendance' && styles.activeTab]}
               onPress={() => setActiveTab('attendance')}
             >
-              <Text style={[styles.tabText, activeTab === 'attendance' && styles.activeTabText]}>Attendance Support</Text>
+              <Text style={[styles.tabText, { color: colors.mutedText }, activeTab === 'attendance' && styles.activeTabText]}>Attendance Support</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.tabButton, activeTab === 'general' && styles.activeTab]}
               onPress={() => setActiveTab('general')}
             >
-              <Text style={[styles.tabText, activeTab === 'general' && styles.activeTabText]}>General Support</Text>
+              <Text style={[styles.tabText, { color: colors.mutedText }, activeTab === 'general' && styles.activeTabText]}>General Support</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeader}>
-              <View style={styles.iconBox}>
-                <Feather name={activeTab === 'attendance' ? 'clock' : 'message-circle'} size={24} color="#351153" />
+              <View style={[styles.iconBox, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#F3E8FF' }]}>
+                <Feather name={activeTab === 'attendance' ? 'clock' : 'message-circle'} size={24} color={colors.primary} />
               </View>
               <View style={styles.cardTitleWrap}>
-                <Text style={styles.cardTitle}>{activeTab === 'attendance' ? 'Attendance Support' : 'General Support'}</Text>
-                <Text style={styles.cardSubtitle}>
+                <Text style={[styles.cardTitle, { color: colors.text }]}>{activeTab === 'attendance' ? 'Attendance Support' : 'General Support'}</Text>
+                <Text style={[styles.cardSubtitle, { color: colors.mutedText }]}>
                   {activeTab === 'attendance'
                     ? 'Request correction for attendance time in/out.'
                     : 'Send a message to your admin team.'}
@@ -180,9 +182,9 @@ export default function EmployeeSupportRequest() {
 
             {activeTab === 'attendance' ? (
               <>
-                <Text style={styles.label}>Date</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Date</Text>
                 {Platform.OS === 'web' ? (
-                  <View style={styles.input}>
+                  <View style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                     <input
                       type="date"
                       value={normalizeDateForApi(attendanceDate)}
@@ -192,11 +194,11 @@ export default function EmployeeSupportRequest() {
                   </View>
                 ) : (
                 <TouchableOpacity
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
                   onPress={() => setShowDatePicker(true)}
                   disabled={submitting}
                 >
-                  <Text style={[styles.inputValue, !attendanceDate && styles.placeholderText]}>
+                  <Text style={[styles.inputValue, { color: colors.text }, !attendanceDate && styles.placeholderText, !attendanceDate && { color: colors.mutedText }]}>
                     {attendanceDate || 'Choose date'}
                   </Text>
                 </TouchableOpacity>
@@ -215,9 +217,9 @@ export default function EmployeeSupportRequest() {
 
                 <View style={styles.timeRow}>
                   <View style={styles.timeField}>
-                    <Text style={styles.label}>Time In</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Time In</Text>
                     {Platform.OS === 'web' ? (
-                      <View style={styles.input}>
+                      <View style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                         <input
                           type="time"
                           value={timeIn}
@@ -227,20 +229,20 @@ export default function EmployeeSupportRequest() {
                       </View>
                     ) : (
                     <TouchableOpacity
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
                       onPress={() => setShowTimePicker('in')}
                       disabled={submitting}
                     >
-                      <Text style={[styles.inputValue, !timeIn && styles.placeholderText]}>
+                      <Text style={[styles.inputValue, { color: colors.text }, !timeIn && styles.placeholderText, !timeIn && { color: colors.mutedText }]}>
                         {timeIn || 'Choose'}
                       </Text>
                     </TouchableOpacity>
                     )}
                   </View>
                   <View style={styles.timeField}>
-                    <Text style={styles.label}>Time Out</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>Time Out</Text>
                     {Platform.OS === 'web' ? (
-                      <View style={styles.input}>
+                      <View style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                         <input
                           type="time"
                           value={timeOut}
@@ -250,11 +252,11 @@ export default function EmployeeSupportRequest() {
                       </View>
                     ) : (
                     <TouchableOpacity
-                      style={styles.input}
+                      style={[styles.input, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
                       onPress={() => setShowTimePicker('out')}
                       disabled={submitting}
                     >
-                      <Text style={[styles.inputValue, !timeOut && styles.placeholderText]}>
+                      <Text style={[styles.inputValue, { color: colors.text }, !timeOut && styles.placeholderText, !timeOut && { color: colors.mutedText }]}>
                         {timeOut || 'Choose'}
                       </Text>
                     </TouchableOpacity>
@@ -277,20 +279,20 @@ export default function EmployeeSupportRequest() {
                   />
                 )}
 
-                <Text style={styles.label}>Reason</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Reason</Text>
                 <TextInput
-                  style={styles.messageInput}
+                  style={[styles.messageInput, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border, color: colors.text }]}
                   value={reason}
                   onChangeText={setReason}
                   placeholder="Reason for attendance correction..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.mutedText}
                   multiline
                   numberOfLines={5}
                   maxLength={500}
                   editable={!submitting}
                   textAlignVertical="top"
                 />
-                <Text style={styles.counter}>{reason.length}/500</Text>
+                <Text style={[styles.counter, { color: colors.mutedText }]}>{reason.length}/500</Text>
 
                 <TouchableOpacity
                   style={[styles.submitButton, submitting && styles.disabledButton]}
@@ -302,20 +304,20 @@ export default function EmployeeSupportRequest() {
               </>
             ) : (
               <>
-                <Text style={styles.label}>Message</Text>
+                <Text style={[styles.label, { color: colors.text }]}>Message</Text>
                 <TextInput
-                  style={styles.messageInput}
+                  style={[styles.messageInput, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border, color: colors.text }]}
                   value={message}
                   onChangeText={setMessage}
                   placeholder="Type your support request..."
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor={colors.mutedText}
                   multiline
                   numberOfLines={6}
                   maxLength={1000}
                   editable={!submitting}
                   textAlignVertical="top"
                 />
-                <Text style={styles.counter}>{message.length}/1000</Text>
+                <Text style={[styles.counter, { color: colors.mutedText }]}>{message.length}/1000</Text>
 
                 <TouchableOpacity
                   style={[styles.submitButton, (!message.trim() || submitting) && styles.disabledButton]}

@@ -10,6 +10,7 @@ import { AppText as Text, AppTextInput as TextInput } from '../components/AppTyp
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { EmployeeContext } from "../context/EmployeeContext";
 import { buildApiUrl, resolveAssetUrl } from "../lib/api";
+import { useAppTheme } from "../context/AppThemeContext";
 
 const { width, height } = Dimensions.get("window");
 const isDesktop = width >= 768;
@@ -58,6 +59,7 @@ const Employee = () => {
   const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
   const { employee, setEmployee, logout } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
   const companyCode = employee?.companyCode;
   const employeeId = employee?.id;
   const clientId = employee?.clientId;
@@ -298,8 +300,8 @@ const Employee = () => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
@@ -313,8 +315,8 @@ const Employee = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <LinearGradient colors={["#ffffff", "#f8fafc"]} style={styles.background}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={isDark ? [colors.background, colors.background] : ["#ffffff", "#f8fafc"]} style={styles.background}>
         {/* Header */}
         <LinearGradient
           colors={['#7726B9', '#5E1D9E']}
@@ -344,10 +346,10 @@ const Employee = () => {
             onPress={() => setMenuVisible(false)}
           >
             <View style={[styles.modalContainer, isDesktop && styles.desktopModalContainer]}>
-              <View style={[styles.modalContent, isDesktop && styles.desktopModalContent]}>
+              <View style={[styles.modalContent, { backgroundColor: colors.surface, borderColor: colors.border }, isDesktop && styles.desktopModalContent]}>
                 <TouchableOpacity style={styles.menuItem} onPress={toggleEditMode}>
-                  <Ionicons name={isEditing ? "close" : "create"} size={20} color="#334155" />
-                  <Text style={styles.menuItemText}>
+                  <Ionicons name={isEditing ? "close" : "create"} size={20} color={colors.mutedText} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>
                     {isEditing ? "Cancel Editing" : "Edit Profile"}
                   </Text>
                 </TouchableOpacity>
@@ -356,8 +358,8 @@ const Employee = () => {
                   setMenuVisible(false);
                   router.push("/MarkAttendance");
                 }}>
-                  <Ionicons name="calendar" size={20} color="#334155" />
-                  <Text style={styles.menuItemText}>Mark Attendance</Text>
+                  <Ionicons name="calendar" size={20} color={colors.mutedText} />
+                  <Text style={[styles.menuItemText, { color: colors.text }]}>Mark Attendance</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity style={[styles.menuItem, styles.logoutMenuItem]} onPress={handleLogout}>
@@ -400,10 +402,10 @@ const Employee = () => {
               )}
             </View>
             <View style={styles.nameContainer}>
-              <Text style={styles.employeeName}>
+              <Text style={[styles.employeeName, { color: colors.text }]}>
                 {employee.firstName} {employee.lastName}
               </Text>
-              <Text style={styles.employeePosition}>{employee.position}</Text>
+              <Text style={[styles.employeePosition, { color: colors.mutedText }]}>{employee.position}</Text>
             </View>
           </View>
 
@@ -749,28 +751,34 @@ const Employee = () => {
 };
 
 // Component definitions moved outside of Employee component
-const ProfileSection = React.memo<{ title: string; children: React.ReactNode }>(({ title, children }) => (
-  <View style={[styles.section, Dimensions.get('window').width >= 768 && styles.desktopSection]}>
-    <Text style={styles.sectionTitle}>{title}</Text>
-    <View style={styles.sectionContent}>{children}</View>
-  </View>
-));
+const ProfileSection = React.memo<{ title: string; children: React.ReactNode }>(({ title, children }) => {
+  const { colors } = useAppTheme();
+  return (
+    <View style={[styles.section, { backgroundColor: colors.surface, borderColor: colors.border }, Dimensions.get('window').width >= 768 && styles.desktopSection]}>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
+      <View style={styles.sectionContent}>{children}</View>
+    </View>
+  );
+});
 
 const InfoRow = React.memo<{ icon: React.ReactNode; label: string; value: string | number }>(({
   icon,
   label,
   value,
-}) => (
-  <View style={styles.infoRow}>
-    <View style={styles.infoLabel}>
-      {icon}
-      <Text style={styles.infoLabelText}>{label}</Text>
+}) => {
+  const { colors } = useAppTheme();
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.infoLabel}>
+        {icon}
+        <Text style={[styles.infoLabelText, { color: colors.mutedText }]}>{label}</Text>
+      </View>
+      <Text style={[styles.infoValue, { color: colors.text }]} numberOfLines={1} ellipsizeMode="tail">
+        {value}
+      </Text>
     </View>
-    <Text style={styles.infoValue} numberOfLines={1} ellipsizeMode="tail">
-      {value}
-    </Text>
-  </View>
-));
+  );
+});
 
 const EditableInfoRow = React.memo<{
   icon: React.ReactNode;
@@ -780,18 +788,20 @@ const EditableInfoRow = React.memo<{
   keyboardType?: string;
   onChangeText: (field: keyof Employee, value: string) => void;
 }>(({ icon, label, field, value, keyboardType = "default", onChangeText }) => {
+  const { colors, isDark } = useAppTheme();
   return (
     <View style={styles.editableInfoRow}>
       <View style={styles.infoLabel}>
         {icon}
-        <Text style={styles.infoLabelText}>{label}</Text>
+        <Text style={[styles.infoLabelText, { color: colors.mutedText }]}>{label}</Text>
       </View>
       <TextInput
-        style={styles.editInput}
+        style={[styles.editInput, { backgroundColor: isDark ? '#0b1220' : '#f9fafb', borderColor: colors.border, color: colors.text }]}
         value={value === null ? "" : String(value)}
         onChangeText={(text) => onChangeText(field, text)}
         keyboardType={keyboardType as any}
         placeholder={`Enter ${label.toLowerCase()}`}
+        placeholderTextColor={colors.mutedText}
         autoCorrect={false}
         autoCapitalize="none"
       />

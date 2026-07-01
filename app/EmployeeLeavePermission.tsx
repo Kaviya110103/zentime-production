@@ -7,6 +7,7 @@ import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'r
 import { AppText as Text } from '../components/AppTypography';
 import { EmployeeContext } from "../context/EmployeeContext";
 import { buildApiUrl } from "../lib/api";
+import { useAppTheme } from "../context/AppThemeContext";
 
 interface LeaveRequest {
   date: string;
@@ -25,6 +26,7 @@ interface LeaveRequest {
 
 const EmployeeLeavePermission = () => {
    const {  employee, setEmployee } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
     const employeeId = employee?.id;
 // const { employee, setEmployee, logout } = useContext(EmployeeContext);
 const companyCode = employee?.companyCode;  // 👈 get companyCode here
@@ -66,7 +68,7 @@ const companyCode = employee?.companyCode;  // 👈 get companyCode here
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
          <LinearGradient
               colors={['#7726B9', '#5E1D9E']}
               style={styles.header}
@@ -83,11 +85,11 @@ const companyCode = employee?.companyCode;  // 👈 get companyCode here
 
       {loading && !refreshing ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#3B82F6" />
-          <Text style={styles.loadingText}>Loading requests...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.mutedText }]}>Loading requests...</Text>
         </View>
       ) : error ? (
-        <View style={styles.errorContainer}>
+        <View style={[styles.errorContainer, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#FEE2E2' }]}>
           <Text style={styles.errorText}>⚠️ {error}</Text>
         </View>
       ) : (
@@ -100,42 +102,42 @@ const companyCode = employee?.companyCode;  // 👈 get companyCode here
             <RefreshControl 
               refreshing={refreshing} 
               onRefresh={onRefresh}
-              colors={['#3B82F6']}
-              tintColor="#3B82F6"
+              colors={[colors.primary]}
+              tintColor={colors.primary}
             />
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No leave or permission requests found</Text>
-              <Text style={styles.emptySubText}>Pull down to refresh</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedText }]}>No leave or permission requests found</Text>
+              <Text style={[styles.emptySubText, { color: colors.mutedText }]}>Pull down to refresh</Text>
             </View>
           }
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.typeText}>{item.leaveType}</Text>
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <View style={[styles.cardHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.typeText, { color: colors.text }]}>{item.leaveType}</Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
                   <Text style={styles.statusText}>{item.status}</Text>
                 </View>
               </View>
               
               <View style={styles.dateContainer}>
-                <Text style={styles.dateLabel}>From:</Text>
-                <Text style={styles.dateValue}>{item.startDate} at {item.startTime}</Text>
+                <Text style={[styles.dateLabel, { color: colors.mutedText }]}>From:</Text>
+                <Text style={[styles.dateValue, { color: colors.text }]}>{item.startDate} at {item.startTime}</Text>
               </View>
               
               <View style={styles.dateContainer}>
-                <Text style={styles.dateLabel}>To:</Text>
-                <Text style={styles.dateValue}>{item.endDate} at {item.endTime}</Text>
+                <Text style={[styles.dateLabel, { color: colors.mutedText }]}>To:</Text>
+                <Text style={[styles.dateValue, { color: colors.text }]}>{item.endDate} at {item.endTime}</Text>
               </View>
               
               <View style={styles.reasonContainer}>
-                <Text style={styles.reasonLabel}>Reason:</Text>
-                <Text style={styles.reasonText}>{item.reason || "Not specified"}</Text>
+                <Text style={[styles.reasonLabel, { color: colors.mutedText }]}>Reason:</Text>
+                <Text style={[styles.reasonText, { color: colors.text }]}>{item.reason || "Not specified"}</Text>
               </View>
               
-              <View style={styles.cardFooter}>
-                <Text style={styles.submittedText}>Submitted on {item.date}</Text>
+              <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
+                <Text style={[styles.submittedText, { color: colors.mutedText }]}>Submitted on {item.date}</Text>
               </View>
             </View>
                          

@@ -133,6 +133,7 @@ function LayoutContent() {
           <Stack.Screen name="LocationTest" options={{ headerShown: false }} />
           {/* <Stack.Scr    een name="Leaverequest" options={{ headerShown: false }} /> */}
           <Stack.Screen name="Walkthrough" options={{ headerShown: false }} />
+          <Stack.Screen name="ThemePreference" options={{ headerShown: false }} />
           <Stack.Screen name="ClientReg" options={{ headerShown: false }} />
         </Stack>
       </View>

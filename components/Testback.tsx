@@ -326,6 +326,12 @@ const AttendanceFlow: React.FC = () => {
     router.replace("/MarkAttendance");
   };
 
+  const actionCardStyle = {
+    backgroundColor: isDark ? "#351153" : colors.surface,
+    borderColor: isDark ? "rgba(255,255,255,0.34)" : colors.border,
+  };
+  const activeActionColor = isDark ? "#FFFFFF" : colors.primary;
+
   if (initialLoading) {
     return (
       <View style={styles.centerContainer}>
@@ -355,7 +361,7 @@ const AttendanceFlow: React.FC = () => {
     if (holidayToday) {
       return (
         <View style={styles.centerContainer}>
-          <TouchableOpacity style={[styles.touchIconBox, { backgroundColor: colors.surface, borderColor: colors.border }, styles.disabledBox]} disabled>
+          <TouchableOpacity style={[styles.touchIconBox, actionCardStyle, styles.disabledBox]} disabled>
             <MaterialIcons name="celebration" size={34} color="#2563EB" />
             <Text style={[styles.touchText, styles.holidayText]}>Holiday</Text>
             <Text style={styles.holidaySubText}>{holidayToday.holidayName || "Holiday"}</Text>
@@ -376,9 +382,9 @@ const AttendanceFlow: React.FC = () => {
   if (view === "closed") {
     return (
       <View style={styles.centerContainer}>
-          <TouchableOpacity style={[styles.touchIconBox, { backgroundColor: colors.surface, borderColor: colors.border }]} disabled>
+        <TouchableOpacity style={[styles.touchIconBox, styles.closedCard, actionCardStyle]} disabled>
           <MaterialIcons name="check-circle" size={34} color="#4CAF50" />
-          <Text style={styles.touchText}>Day Closed</Text>
+          <Text style={[styles.closedText, { color: activeActionColor }]}>Day{"\n"}Closed</Text>
         </TouchableOpacity>
       </View>
     );
@@ -391,7 +397,7 @@ const AttendanceFlow: React.FC = () => {
     <>
       <View style={styles.centerContainer}>
         <TouchableOpacity
-          style={[styles.touchIconBox, { backgroundColor: colors.surface, borderColor: colors.border }, isDisabled && styles.disabledBox]}
+          style={[styles.touchIconBox, actionCardStyle, isDisabled && styles.disabledBox]}
           onPress={handleActionPress}
           disabled={isDisabled}
         >
@@ -402,9 +408,9 @@ const AttendanceFlow: React.FC = () => {
               <MaterialIcons 
                 name={label === "Start Day" ? "wb-sunny" : label === "Holiday" ? "celebration" : "touch-app"} 
                 size={38} 
-                color={label === "Holiday" ? "#2563EB" : isDisabled ? "#9CA3AF" : colors.primary}
+                color={label === "Holiday" ? "#93C5FD" : isDisabled ? "#9CA3AF" : activeActionColor}
               />
-              <Text style={[styles.touchText, { color: colors.primary }, label === "Holiday" ? styles.holidayText : isDisabled && styles.disabledText]}>
+              <Text style={[styles.touchText, { color: activeActionColor }, label === "Holiday" ? styles.holidayText : isDisabled && styles.disabledText]}>
                 {label}
               </Text>
             </>
@@ -608,14 +614,27 @@ const styles = StyleSheet.create({
     borderColor: "rgba(53,17,83,0.1)",
   },
   disabledBox: {
-    opacity: 0.7,
-    backgroundColor: "#F3F4F6",
   },
   touchText: {
     marginTop: 10,
     fontSize: 16,
     color: "#351153",
     fontWeight: "600",
+  },
+  closedCard: {
+    width: 128,
+    minHeight: 128,
+    paddingVertical: 22,
+    paddingHorizontal: 16,
+  },
+  closedText: {
+    marginTop: 12,
+    fontSize: 15,
+    lineHeight: 18,
+    color: "#351153",
+    fontWeight: "700",
+    textAlign: "center",
+    alignSelf: "stretch",
   },
   disabledText: {
     color: "#9CA3AF",

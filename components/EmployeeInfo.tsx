@@ -269,6 +269,9 @@ interface Employee {
   position: ReactNode;
   id: number;
   username: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
   profileImage?: string;
   
 }
@@ -365,8 +368,8 @@ const EmployeeInfo: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
         setShowNotification(status !== "Attendance complete for today.");
       } catch (error) {
         console.error('Error checking attendance:', error);
-        setAttendanceStatus('Error checking attendance');
-        setShowNotification(true);
+        setAttendanceStatus('');
+        setShowNotification(false);
       }
     };
 
@@ -445,6 +448,13 @@ const EmployeeInfo: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
   const profileImageSource = employees.profileImage
     ? { uri: resolveAssetUrl(employees.profileImage) }
     : require('../assets/images/empimage.jpg');
+  const employeeDisplayName =
+    [employees.firstName, employees.lastName]
+      .map((part) => String(part || '').trim())
+      .filter(Boolean)
+      .join(' ') ||
+    String(employees.name || '').trim() ||
+    employees.username;
 
   return (
     <>
@@ -460,7 +470,7 @@ const EmployeeInfo: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
             <Feather name="menu" size={24} color="white" />
           </Pressable>
           <View style={styles.employeeText}>
-            <Text style={styles.employeeName}>Hello {employees.username}</Text>
+            <Text style={styles.employeeName}>Hello {employeeDisplayName}</Text>
             <Text style={styles.employeeTitle}>{employees.position}</Text>
           </View>
           <Pressable
@@ -500,7 +510,7 @@ const EmployeeInfo: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
               <Image source={profileImageSource} style={styles.sideNavAvatarImage} />
             </TouchableOpacity>
             <View style={styles.sideNavEmployee}>
-              <Text style={styles.sideNavName}>{employees.username}</Text>
+              <Text style={styles.sideNavName}>{employeeDisplayName}</Text>
               <Text style={styles.sideNavRole}>{employees.position}</Text>
             </View>
             <TouchableOpacity style={styles.sideNavClose} onPress={closeMenu}>

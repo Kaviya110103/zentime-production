@@ -10,6 +10,8 @@ import {
 import { useAppTheme } from '../context/AppThemeContext';
 import { APP_FONT_FAMILY, APP_FONT_FAMILY_BOLD } from '../lib/typography';
 
+const APP_FONT_SCALE = 0.92;
+
 function isBoldWeight(fontWeight: unknown): boolean {
   if (fontWeight === 'bold') {
     return true;
@@ -34,10 +36,15 @@ function resolveGlobalFont(
   const flattenedStyle = StyleSheet.flatten(style as any) ?? {};
   const shouldUseBold = isBoldWeight(flattenedStyle.fontWeight);
   const resolvedColor = flattenedStyle.color ?? defaultTextColor;
+  const resolvedFontSize =
+    typeof flattenedStyle.fontSize === 'number'
+      ? Math.max(8, Math.round(flattenedStyle.fontSize * APP_FONT_SCALE))
+      : undefined;
 
   return {
     fontFamily: shouldUseBold ? APP_FONT_FAMILY_BOLD : APP_FONT_FAMILY,
     color: resolvedColor,
+    ...(resolvedFontSize ? { fontSize: resolvedFontSize } : {}),
     // Prevent Android fallback to system fonts when custom fonts combine with fontWeight.
     fontWeight: 'normal' as const,
   };

@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { EmployeeContext } from '../context/EmployeeContext';
 import BottomNavBar from '../components/BottomNavBar';
 import { buildApiUrl, withClientId } from '../lib/api';
+import { useAppTheme } from '../context/AppThemeContext';
 
 type AttendanceData = {
   date: string;
@@ -58,6 +59,7 @@ export default function EmployeeCalendar() {
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const { employee } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
   const clientId = employee?.clientId;
   const employeeId = Number(employee?.id);
   const [isLoadingMonthly, setIsLoadingMonthly] = useState(false);
@@ -143,11 +145,6 @@ export default function EmployeeCalendar() {
       setAttendanceMarkedDates(marked);
     } catch (err: any) {
       console.error('Error fetching monthly attendance:', err);
-      Alert.alert(
-        'Error',
-        err.response?.data?.message || err.message || 'Failed to load attendance data',
-        [{ text: 'OK' }]
-      );
       setAttendanceMarkedDates({});
     } finally {
       setIsLoadingMonthly(false);
@@ -326,9 +323,9 @@ export default function EmployeeCalendar() {
   // Show loading while employee data is loading
   if (!isEmployeeReady) {
     return (
-      <View style={styles.loadingScreen}>
-        <ActivityIndicator size="large" color="#7726B9" />
-        <Text style={styles.loadingText}>Loading employee data...</Text>
+      <View style={[styles.loadingScreen, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.mutedText }]}>Loading employee data...</Text>
       </View>
     );
   }
@@ -337,8 +334,8 @@ export default function EmployeeCalendar() {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007AFF" />
-          <Text style={styles.loadingText}>Loading attendance data...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.mutedText }]}>Loading attendance data...</Text>
         </View>
       );
     }
@@ -347,8 +344,8 @@ export default function EmployeeCalendar() {
       return (
         <>
           <View style={styles.dateHeader}>
-            <Feather name="calendar" size={20} color="#007AFF" />
-            <Text style={styles.dateText}>
+            <Feather name="calendar" size={20} color={colors.primary} />
+            <Text style={[styles.dateText, { color: colors.text }]}>
               {formatDate(attendanceData.date)}
             </Text>
           </View>
@@ -368,14 +365,14 @@ export default function EmployeeCalendar() {
             )}
           </View>
 
-          <View style={styles.detailsCard}>
+          <View style={[styles.detailsCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
             {!!selectedHoliday && (
               <View style={styles.detailRow}>
                 <View style={styles.detailIcon}>
                   <Feather name="gift" size={18} color="#1976D2" />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Holiday</Text>
+                  <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Holiday</Text>
                   <Text style={[styles.detailValue, { color: '#1976D2' }]}>
                     {selectedHoliday.holidayName} ({getHolidayTypeLabel(selectedHoliday.holidayType)})
                   </Text>
@@ -385,11 +382,11 @@ export default function EmployeeCalendar() {
 
             <View style={styles.detailRow}>
               <View style={styles.detailIcon}>
-                <Feather name="clock" size={18} color="#6B7280" />
+                <Feather name="clock" size={18} color={colors.mutedText} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Time In</Text>
-                <Text style={styles.detailValue}>
+                <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Time In</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>
                   {formatTime(attendanceData.timeIn)}
                 </Text>
               </View>
@@ -397,11 +394,11 @@ export default function EmployeeCalendar() {
             
             <View style={styles.detailRow}>
               <View style={styles.detailIcon}>
-                <Feather name="clock" size={18} color="#6B7280" />
+                <Feather name="clock" size={18} color={colors.mutedText} />
               </View>
               <View style={styles.detailContent}>
-                <Text style={styles.detailLabel}>Time Out</Text>
-                <Text style={styles.detailValue}>
+                <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Time Out</Text>
+                <Text style={[styles.detailValue, { color: colors.text }]}>
                   {formatTime(attendanceData.timeOut)}
                 </Text>
               </View>
@@ -410,11 +407,11 @@ export default function EmployeeCalendar() {
             {!!attendanceData.location && (
               <View style={styles.detailRow}>
                 <View style={styles.detailIcon}>
-                  <Feather name="map-pin" size={18} color="#6B7280" />
+                  <Feather name="map-pin" size={18} color={colors.mutedText} />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Location</Text>
-                  <Text style={styles.detailValue}>{attendanceData.location}</Text>
+                  <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Location</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{attendanceData.location}</Text>
                 </View>
               </View>
             )}
@@ -425,7 +422,7 @@ export default function EmployeeCalendar() {
                   <Feather name="alert-circle" size={18} color="#F44336" />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Missed Time</Text>
+                  <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Missed Time</Text>
                   <Text style={[styles.detailValue, {color: '#F44336'}]}>
                     {attendanceData.missedTimes} minutes
                   </Text>
@@ -439,7 +436,7 @@ export default function EmployeeCalendar() {
                   <Feather name="info" size={18} color="#FF9800" />
                 </View>
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Reason</Text>
+                  <Text style={[styles.detailLabel, { color: colors.mutedText }]}>Reason</Text>
                   <Text style={[styles.detailValue, {color: '#FF9800'}]}>
                     {attendanceData.timoutReason}
                   </Text>
@@ -530,12 +527,12 @@ export default function EmployeeCalendar() {
 
   const modalContainerStyle = {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.background,
     paddingTop: getStatusBarPadding(),
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar backgroundColor="#7726B9" barStyle="light-content" />
       <LinearGradient
         colors={['#7726B9', '#5E1D9E']}
@@ -549,11 +546,11 @@ export default function EmployeeCalendar() {
       <View style={styles.calendarWrapper}>
         {isLoadingMonthly && (
           <View style={styles.monthlyLoading}>
-            <ActivityIndicator size="small" color="#7726B9" />
+            <ActivityIndicator size="small" color={colors.primary} />
           </View>
         )}
         
-        <View style={styles.calendarContainer}>
+        <View style={[styles.calendarContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Calendar
             markedDates={{
               ...markedDates,
@@ -568,20 +565,20 @@ export default function EmployeeCalendar() {
             onDayPress={onDayPress}
             onMonthChange={onMonthChange}
             theme={{
-              backgroundColor: '#FFFFFF',
-              calendarBackground: '#FFFFFF',
-              textSectionTitleColor: '#6B7280',
-              selectedDayBackgroundColor: '#007AFF',
+              backgroundColor: colors.surface,
+              calendarBackground: colors.surface,
+              textSectionTitleColor: colors.mutedText,
+              selectedDayBackgroundColor: colors.primary,
               selectedDayTextColor: '#FFFFFF',
-              todayTextColor: '#007AFF',
-              dayTextColor: '#1F2937',
-              textDisabledColor: '#D1D5DB',
-              dotColor: '#007AFF',
+              todayTextColor: colors.primary,
+              dayTextColor: colors.text,
+              textDisabledColor: isDark ? '#475569' : '#D1D5DB',
+              dotColor: colors.primary,
               selectedDotColor: '#FFFFFF',
-              arrowColor: '#007AFF',
-              disabledArrowColor: '#D1D5DB',
-              monthTextColor: '#111827',
-              indicatorColor: '#007AFF',
+              arrowColor: colors.primary,
+              disabledArrowColor: isDark ? '#475569' : '#D1D5DB',
+              monthTextColor: colors.text,
+              indicatorColor: colors.primary,
               textDayFontSize: 14,
               textMonthFontSize: 16,
               textDayHeaderFontSize: 12,
@@ -600,8 +597,8 @@ export default function EmployeeCalendar() {
         statusBarTranslucent={false}
       >
         <View style={modalContainerStyle}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Attendance / Holiday Details</Text>
+          <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Attendance / Holiday Details</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={() => setModalVisible(false)}

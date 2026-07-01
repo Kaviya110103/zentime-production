@@ -11,6 +11,7 @@ import { NativeStackNavigationProp } from "react-native-screens/lib/typescript/n
 import { router } from 'expo-router';
 import { EmployeeContext } from "../context/EmployeeContext";
 import { buildApiUrl, withClientId } from "../lib/api";
+import { useAppTheme } from "../context/AppThemeContext";
 
 interface DayCloseProps {
   recordId: number;
@@ -24,6 +25,7 @@ export default function DayCloseComponent({
   const [loading, setLoading] = useState(false);
     // const navigation = useNavigation<MarkTimeInNavigationProp>();
     const { employee } = useContext(EmployeeContext);
+    const { colors, isDark } = useAppTheme();
 
   const handleDayClose = async () => {
     setLoading(true);
@@ -54,7 +56,7 @@ export default function DayCloseComponent({
   return (
     <View style={styles.container}>
       {loading ? (
-        <ActivityIndicator size="large" />
+        <ActivityIndicator size="large" color={colors.primary} />
       ) : (
         <>
           {/* <TouchableOpacity
@@ -65,12 +67,19 @@ export default function DayCloseComponent({
           </TouchableOpacity> */}
             <View style={styles.centerContainer}>
             <TouchableOpacity
-  style={styles.touchIconBox}
+  style={[
+    styles.touchIconBox,
+    {
+      backgroundColor: isDark ? "#351153" : colors.surface,
+      borderColor: isDark ? "rgba(255,255,255,0.34)" : colors.border,
+      shadowColor: colors.primary,
+    },
+  ]}
   onPress={handleDayClose}
   disabled={loading}
 >
-  <MaterialIcons name="touch-app" size={38} color="black" />
-  <Text style={styles.dayCloseText}>Confirm</Text>
+  <MaterialIcons name="touch-app" size={38} color={isDark ? "#FFFFFF" : colors.primary} />
+  <Text style={[styles.dayCloseText, { color: isDark ? "#FFFFFF" : colors.primary }]}>Confirm</Text>
 </TouchableOpacity>
 
 

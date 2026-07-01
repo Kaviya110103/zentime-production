@@ -74,6 +74,11 @@ export default function StartDayComponent({ employeeId, onDone, onCancel }: Star
   }, [employeeId, companyCode]);
 
   const isAbsentToday = attendanceStatus === 'Absent';
+  const actionCardStyle = {
+    backgroundColor: isDark ? '#351153' : colors.surface,
+    borderColor: isDark ? 'rgba(255,255,255,0.34)' : colors.border,
+  };
+  const activeActionColor = isDark ? '#FFFFFF' : colors.primary;
 
   const closeLocationModal = () => {
     setShowLocationModal(false);
@@ -246,7 +251,7 @@ export default function StartDayComponent({ employeeId, onDone, onCancel }: Star
         <TouchableOpacity
           style={[
             styles.touchIconBox,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            actionCardStyle,
             (isAbsentToday || loading) && styles.disabledContainer
           ]}
           onPress={handleStartDayFlow}
@@ -259,11 +264,11 @@ export default function StartDayComponent({ employeeId, onDone, onCancel }: Star
               <MaterialIcons 
                 name={isAbsentToday ? "hotel" : "wb-sunny"} 
                 size={38} 
-                color={isAbsentToday ? "#9CA3AF" : colors.primary}
+                color={isAbsentToday ? "#9CA3AF" : activeActionColor}
               />
               <Text style={[
                 styles.dayStartText,
-                { color: colors.primary },
+                { color: activeActionColor },
                 isAbsentToday && styles.disabledText
               ]}>
                 {isAbsentToday ? 'Take Rest' : 'Start Day'}
@@ -457,8 +462,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   disabledContainer: {
-    opacity: 0.7,
-    backgroundColor: "#F3F4F6",
   },
   disabledText: {
     color: "#9CA3AF",

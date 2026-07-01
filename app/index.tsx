@@ -4,7 +4,7 @@ import { AppAnimatedText } from '../components/AppTypography';
 import { useRouter } from 'expo-router';
 import { EmployeeContext } from '../context/EmployeeContext'; // adjust path if needed
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useAppTheme } from '../context/AppThemeContext';
+import { APP_THEME_PREFERENCE_KEY, useAppTheme } from '../context/AppThemeContext';
 
 const WALKTHROUGH_DONE_KEY = 'walkthroughCompleted';
 
@@ -53,7 +53,10 @@ export default function Index() {
         router.replace('/WelcomeBack');
       } else {
         const walkthroughCompleted = await AsyncStorage.getItem(WALKTHROUGH_DONE_KEY);
-        if (walkthroughCompleted === 'true') {
+        const themePreference = await AsyncStorage.getItem(APP_THEME_PREFERENCE_KEY);
+        if (walkthroughCompleted === 'true' && !themePreference) {
+          router.replace('/ThemePreference');
+        } else if (walkthroughCompleted === 'true') {
           router.replace('/EmployeeLogin');
         } else {
           router.replace('/Walkthrough');

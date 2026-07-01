@@ -80,8 +80,12 @@ export default function AdminLogin() {
         return;
       }
 
-      await AsyncStorage.setItem(WALKTHROUGH_DONE_KEY, 'true');
-      await setAdminClient(data);
+      setAdminClient(data).catch((storageError) => {
+        console.warn("[AdminLogin] Failed to persist admin session", storageError);
+      });
+      AsyncStorage.setItem(WALKTHROUGH_DONE_KEY, 'true').catch((storageError) => {
+        console.warn("[AdminLogin] Failed to persist walkthrough state", storageError);
+      });
       setMessageColor("#16A34A");
       setMessage("Login successful!");
       router.replace("/AdminDashboard");

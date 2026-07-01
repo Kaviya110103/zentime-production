@@ -14,6 +14,7 @@ import { useAppTheme } from '../context/AppThemeContext';
 
 interface AttendanceReport {
   firstName: string;
+  lastName?: string;
   empId: string;
   name: string;
   date: string;
@@ -59,10 +60,26 @@ const EmployeeAttendanceReport = () => {
 
   const [employeeDetails, setEmployeeDetails] = useState({
     firstName: '',
+    lastName: '',
     branch: '',
     mobile: '',
     position: '',
   });
+
+  const employeeDisplayName =
+    [employeeDetails.firstName, employeeDetails.lastName]
+      .map((part) => String(part || '').trim())
+      .filter(Boolean)
+      .join(' ') || 'N/A';
+  const summaryCardThemeStyle = isDark
+    ? { backgroundColor: '#351153', borderColor: 'rgba(255,255,255,0.28)' }
+    : {};
+  const summaryValueThemeStyle = { color: isDark ? '#FFFFFF' : '#1F2937' };
+  const presentValueThemeStyle = { color: isDark ? '#86EFAC' : '#16A34A' };
+  const absentValueThemeStyle = { color: isDark ? '#FCA5A5' : '#DC2626' };
+  const weekOffValueThemeStyle = { color: isDark ? '#DDD6FE' : '#7C3AED' };
+  const holidayValueThemeStyle = { color: isDark ? '#93C5FD' : '#1976D2' };
+  const summaryLabelThemeStyle = { color: isDark ? '#E9D5FF' : '#6B7280' };
 
   // Initialize employee data
   useEffect(() => {
@@ -102,6 +119,7 @@ const EmployeeAttendanceReport = () => {
         const res = await axios.get(buildApiUrl(`/api/employees/${employeeId}`, { clientId }));
         setEmployeeDetails({
           firstName: res.data.firstName || '',
+          lastName: res.data.lastName || '',
           branch: res.data.branch || '',
           mobile: res.data.mobile || '',
           position: res.data.position || '',
@@ -172,10 +190,15 @@ const EmployeeAttendanceReport = () => {
         .sort((a: any, b: any) => compareReportDates(a?.date, b?.date));
 
       const formattedData = sourceData.map((item: any) => {
+        const rowFullName = [item.firstName, item.lastName]
+          .map((part) => String(part || '').trim())
+          .filter(Boolean)
+          .join(' ');
         return {
           empId: employeeId.toString(),
           firstName: item.firstName || employeeDetails.firstName || 'N/A',
-          name: item.name || item.firstName || employeeDetails.firstName || 'N/A',
+          lastName: item.lastName || employeeDetails.lastName || '',
+          name: rowFullName || item.name || employeeDisplayName,
           date: normalizeDateLabel(item.date),
           timeIn: item.timeIn,
           timeOut: item.timeOut,
@@ -200,15 +223,7 @@ const EmployeeAttendanceReport = () => {
       setPrintData([]);
       setSummary({ total: 0, present: 0, absent: 0, weekOff: 0, holiday: 0 });
       
-      // Check if it's a network error
-      if (error.code === 'ECONNABORTED' || error.message.includes('Network Error')) {
-        Alert.alert('Network Error', 'Please check your internet connection and try again.');
-      } else if (error.response) {
-        // Server responded with error
-        Alert.alert('Error', error.response.data?.message || 'Failed to fetch attendance data');
-      } else {
-        Alert.alert('Error', 'Failed to fetch attendance data. Please try again.');
-      }
+      console.warn('Monthly report background fetch failed:', error?.message || error);
     } finally {
       setLoading(false);
     }
@@ -462,7 +477,7 @@ const EmployeeAttendanceReport = () => {
             <div class="report-title">Monthly Attendance Report</div>
             <div class="report-period">${getPeriodString()}</div>
             <div class="employee-info">Employee ID: ${employeeId}</div>
-            <div class="employee-info">Name: ${employeeDetails.firstName}</div>
+            <div class="employee-info">Name: ${employeeDisplayName}</div>
             <div class="employee-info">Branch: ${employeeDetails.branch}</div>
             <div class="employee-info">Mobile: ${employeeDetails.mobile}</div>
             <div class="employee-info">Position: ${employeeDetails.position}</div>
@@ -618,30 +633,30 @@ const EmployeeAttendanceReport = () => {
                 <Feather name="chevron-right" size={18} color={colors.primary} />
               </TouchableOpacity>
             </View>
-            <Text style={[styles.employeeName, { color: colors.mutedText }]}>{employeeDetails.firstName}</Text>
+            <Text style={[styles.employeeName, { color: colors.mutedText }]}>{employeeDisplayName}</Text>
           </View>
           
           <ScrollView style={styles.printScroll}>
             <View style={styles.summaryGrid}>
-              <View style={[styles.summaryCard, isDark && { backgroundColor: '#1f2937', borderColor: colors.border }]}>
-                <Text style={styles.summaryValue}>{summary.total}</Text>
-                <Text style={styles.summaryLabel}>Total Records</Text>
+              <View style={[styles.summaryCard, summaryCardThemeStyle]}>
+                <Text style={[styles.summaryValue, summaryValueThemeStyle]}>{summary.total}</Text>
+                <Text style={[styles.summaryLabel, summaryLabelThemeStyle]}>Total Records</Text>
               </View>
-              <View style={[styles.summaryCard, isDark && { backgroundColor: '#1f2937', borderColor: colors.border }]}>
-                <Text style={[styles.summaryValue, styles.presentValue]}>{summary.present}</Text>
-                <Text style={styles.summaryLabel}>Present</Text>
+              <View style={[styles.summaryCard, summaryCardThemeStyle]}>
+                <Text style={[styles.summaryValue, presentValueThemeStyle]}>{summary.present}</Text>
+                <Text style={[styles.summaryLabel, summaryLabelThemeStyle]}>Present</Text>
               </View>
-              <View style={[styles.summaryCard, isDark && { backgroundColor: '#1f2937', borderColor: colors.border }]}>
-                <Text style={[styles.summaryValue, styles.absentValue]}>{summary.absent}</Text>
-                <Text style={styles.summaryLabel}>Absent</Text>
+              <View style={[styles.summaryCard, summaryCardThemeStyle]}>
+                <Text style={[styles.summaryValue, absentValueThemeStyle]}>{summary.absent}</Text>
+                <Text style={[styles.summaryLabel, summaryLabelThemeStyle]}>Absent</Text>
               </View>
-              <View style={[styles.summaryCard, isDark && { backgroundColor: '#1f2937', borderColor: colors.border }]}>
-                <Text style={[styles.summaryValue, styles.weekOffValue]}>{summary.weekOff}</Text>
-                <Text style={styles.summaryLabel}>Week Off</Text>
+              <View style={[styles.summaryCard, summaryCardThemeStyle]}>
+                <Text style={[styles.summaryValue, weekOffValueThemeStyle]}>{summary.weekOff}</Text>
+                <Text style={[styles.summaryLabel, summaryLabelThemeStyle]}>Week Off</Text>
               </View>
-              <View style={[styles.summaryCard, isDark && { backgroundColor: '#1f2937', borderColor: colors.border }]}>
-                <Text style={[styles.summaryValue, styles.holidayValue]}>{summary.holiday}</Text>
-                <Text style={styles.summaryLabel}>Holiday</Text>
+              <View style={[styles.summaryCard, summaryCardThemeStyle]}>
+                <Text style={[styles.summaryValue, holidayValueThemeStyle]}>{summary.holiday}</Text>
+                <Text style={[styles.summaryLabel, summaryLabelThemeStyle]}>Holiday</Text>
               </View>
             </View>
 
@@ -708,8 +723,8 @@ const EmployeeAttendanceReport = () => {
       </View>
 
       {loading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#7726B9" />
+        <View style={[styles.loadingOverlay, { backgroundColor: isDark ? 'rgba(15, 23, 42, 0.88)' : 'rgba(255, 255, 255, 0.8)' }]}>
+          <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.primary }]}>Loading attendance data...</Text>
         </View>
       )}

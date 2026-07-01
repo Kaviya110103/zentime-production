@@ -1,7 +1,8 @@
-import React, { createContext, useContext, useMemo } from 'react';
-import { useColorScheme } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type AppThemeMode = 'light' | 'dark';
+export const APP_THEME_PREFERENCE_KEY = 'appThemePreference';
 
 type AppThemeColors = {
   background: string;
@@ -17,6 +18,7 @@ type AppThemeContextValue = {
   isDark: boolean;
   colors: AppThemeColors;
   themeReady: boolean;
+  setThemePreference: (mode: AppThemeMode) => Promise<void>;
 };
 
 const LIGHT_COLORS: AppThemeColors = {
@@ -42,11 +44,34 @@ const AppThemeContext = createContext<AppThemeContextValue>({
   isDark: false,
   colors: LIGHT_COLORS,
   themeReady: true,
+  setThemePreference: async () => {},
 });
 
 export function AppThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemTheme = useColorScheme();
-  const mode: AppThemeMode = systemTheme === 'dark' ? 'dark' : 'light';
+  const [mode, setMode] = useState<AppThemeMode>('light');
+  const [themeReady, setThemeReady] = useState(false);
+
+  useEffect(() => {
+    const loadThemePreference = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(APP_THEME_PREFERENCE_KEY);
+        setMode(stored === 'dark' ? 'dark' : 'light');
+      } catch (error) {
+        console.warn('Failed to load app theme preference:', error);
+        setMode('light');
+      } finally {
+        setThemeReady(true);
+      }
+    };
+
+    loadThemePreference();
+  }, []);
+
+  const setThemePreference = useCallback(async (nextMode: AppThemeMode) => {
+    setMode(nextMode);
+    await AsyncStorage.setItem(APP_THEME_PREFERENCE_KEY, nextMode);
+  }, []);
+
   const isDark = mode === 'dark';
   const colors = isDark ? DARK_COLORS : LIGHT_COLORS;
 
@@ -55,9 +80,10 @@ export function AppThemeProvider({ children }: { children: React.ReactNode }) {
       mode,
       isDark,
       colors,
-      themeReady: true,
+      themeReady,
+      setThemePreference,
     }),
-    [mode, isDark, colors]
+    [mode, isDark, colors, themeReady, setThemePreference]
   );
 
   return <AppThemeContext.Provider value={value}>{children}</AppThemeContext.Provider>;

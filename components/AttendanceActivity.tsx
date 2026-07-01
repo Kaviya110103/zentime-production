@@ -5,9 +5,7 @@ import axios from 'axios';
 import { Feather } from '@expo/vector-icons';
 import { EmployeeContext } from '../context/EmployeeContext';
 import { buildApiUrl, withClientId } from '../lib/api';
-
-// Type definitions
-type FeatherIconName = React.ComponentProps<typeof Feather>['name'];
+import { useAppTheme } from '../context/AppThemeContext';
 
 type AttendanceData = {
   date: string;
@@ -26,6 +24,7 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
   const [error, setError] = useState<string | null>(null);
   const [attendances, setAttendances] = useState<AttendanceData[]>([]);
   const { employee } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
   const companyCode = employee?.companyCode;
   const clientId = employee?.clientId;
 
@@ -135,23 +134,27 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
   };
 
   const getAttendanceStatus = (attendance: AttendanceData) => {
-    if (attendance.attendanceStatus === 'Absent') return 'absent';
+    const rawStatus = String(attendance.attendanceStatus || '').toLowerCase();
+    if (rawStatus.includes('week')) return 'weekoff';
+    if (rawStatus.includes('holiday')) return 'holiday';
+    if (rawStatus.includes('absent')) return 'absent';
+    if (rawStatus.includes('present')) return 'present';
     if (attendance.timeIn) return 'present';
     return 'no-data';
   };
 
   if (loading) {
     return (
-      <View style={styles.centeredContainer}>
-        <ActivityIndicator size="large" color="#007bff" />
-        <Text style={styles.loadingText}>Loading attendance...</Text>
+      <View style={[styles.centeredContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={[styles.loadingText, { color: colors.mutedText }]}>Loading attendance...</Text>
       </View>
     );
   }
 
   if (error) {
     return (
-      <View style={styles.centeredContainer}>
+      <View style={[styles.centeredContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <Feather name="alert-circle" size={48} color="#dc3545" />
         <Text style={styles.errorText}>{error}</Text>
       </View>
@@ -170,25 +173,25 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
   attendances.forEach(att => attendanceMap.set(att.date, att));
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.heading}>Attendance Activity</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+      <Text style={[styles.heading, { color: colors.text }]}>Attendance Activity</Text>
 
       <View style={styles.table}>
-          <View style={styles.headerRow}>
+          <View style={[styles.headerRow, { borderBottomColor: colors.border }]}>
             <View style={[styles.headerCell, styles.dayCell]}>
-              <Text style={styles.headerText}>Day</Text>
+              <Text style={[styles.headerText, { color: colors.mutedText }]}>Day</Text>
             </View>
             <View style={[styles.headerCell, styles.statusCell]}>
-              <Text style={styles.headerText}>Status</Text>
+              <Text style={[styles.headerText, { color: colors.mutedText }]}>Status</Text>
             </View>
             <View style={[styles.headerCell, styles.timeCell]}>
-              <Text style={styles.headerText}>In</Text>
+              <Text style={[styles.headerText, { color: colors.mutedText }]}>In</Text>
             </View>
             <View style={[styles.headerCell, styles.timeCell]}>
-              <Text style={styles.headerText}>Out</Text>
+              <Text style={[styles.headerText, { color: colors.mutedText }]}>Out</Text>
             </View>
             <View style={[styles.headerCell, styles.totalCell]}>
-              <Text style={styles.headerText}>Total</Text>
+              <Text style={[styles.headerText, { color: colors.mutedText }]}>Total</Text>
             </View>
           </View>
 
@@ -210,24 +213,33 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
                 case 'absent':
                   return {
                     label: 'Absent',
-                    color: '#dc3545',
-                    bgColor: '#ffe6e6',
-                    icon: 'x-circle' as FeatherIconName,
+                    color: isDark ? '#fca5a5' : '#dc3545',
+                    bgColor: isDark ? 'rgba(239, 68, 68, 0.16)' : '#ffe6e6',
                   };
                 case 'present':
                   return {
                     label: 'Present',
-                    color: '#28a745',
-                    bgColor: '#e6ffed',
-                    icon: 'check-circle' as FeatherIconName,
+                    color: isDark ? '#86efac' : '#28a745',
+                    bgColor: isDark ? 'rgba(34, 197, 94, 0.16)' : '#e6ffed',
+                  };
+                case 'weekoff':
+                  return {
+                    label: 'Week Off',
+                    color: isDark ? '#c4b5fd' : '#6d28d9',
+                    bgColor: isDark ? 'rgba(139, 92, 246, 0.18)' : '#ede9fe',
+                  };
+                case 'holiday':
+                  return {
+                    label: 'Holiday',
+                    color: isDark ? '#fde68a' : '#b45309',
+                    bgColor: isDark ? 'rgba(245, 158, 11, 0.16)' : '#fef3c7',
                   };
                 case 'no-data':
                 default:
                   return {
                     label: 'No Data',
-                    color: '#6c757d',
-                    bgColor: '#f8f9fa',
-                    icon: 'help-circle' as FeatherIconName,
+                    color: colors.mutedText,
+                    bgColor: isDark ? 'rgba(148, 163, 184, 0.14)' : '#f8f9fa',
                   };
               }
             };
@@ -263,12 +275,25 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
               totalHoursStyle = styles.totalPresent;
             }
 
+            const totalHoursColor =
+              totalHours === 'In Progress'
+                ? (isDark ? '#fdba74' : '#ff9800')
+                : totalHours !== '--:--'
+                  ? (isDark ? '#93c5fd' : '#007bff')
+                  : colors.mutedText;
+            const totalHoursBg =
+              totalHours === 'In Progress'
+                ? (isDark ? 'rgba(249, 115, 22, 0.16)' : '#fff3e0')
+                : totalHours !== '--:--'
+                  ? (isDark ? 'rgba(59, 130, 246, 0.16)' : '#e6f2ff')
+                  : (isDark ? 'rgba(148, 163, 184, 0.14)' : '#f5f5f5');
+
             return (
-              <View key={date} style={styles.row}>
+              <View key={date} style={[styles.row, { borderBottomColor: colors.border }]}>
                 {/* Day Column */}
                 <View style={[styles.dataCell, styles.dayCell]}>
-                  <Text style={styles.dayName}>{dayName}</Text>
-                  <Text style={styles.dateNumber}>{formattedDate}</Text>
+                  <Text style={[styles.dayName, { color: colors.mutedText }]}>{dayName}</Text>
+                  <Text style={[styles.dateNumber, { color: colors.text }]}>{formattedDate}</Text>
                 </View>
 
                 {/* Status Column */}
@@ -285,7 +310,8 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
                   <View style={styles.timeContainer}>
                     <Text style={[
                       styles.timeText, 
-                      attendance.timeIn ? styles.timePresent : styles.timeAbsent
+                      attendance.timeIn ? styles.timePresent : styles.timeAbsent,
+                      { color: attendance.timeIn ? colors.text : colors.mutedText }
                     ]}>
                       {formatTime(attendance.timeIn)}
                     </Text>
@@ -297,7 +323,8 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
                   <View style={styles.timeContainer}>
                     <Text style={[
                       styles.timeText, 
-                      attendance.timeOut ? styles.timePresent : styles.timeAbsent
+                      attendance.timeOut ? styles.timePresent : styles.timeAbsent,
+                      { color: attendance.timeOut ? colors.text : colors.mutedText }
                     ]}>
                       {formatTime(attendance.timeOut)}
                     </Text>
@@ -306,7 +333,7 @@ const AttendanceActivity: React.FC<EmployeeInfoProps> = ({ employeeId }) => {
 
                 {/* Total Hours Column */}
                 <View style={[styles.dataCell, styles.totalCell]}>
-                  <Text style={[styles.totalText, totalHoursStyle]}>
+                  <Text style={[styles.totalText, totalHoursStyle, { color: totalHoursColor, backgroundColor: totalHoursBg }]}>
                     {totalHours}
                   </Text>
                 </View>
@@ -322,7 +349,6 @@ export default AttendanceActivity;
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
     borderRadius: 12,
     padding: 12,
     marginHorizontal: 16,
@@ -333,17 +359,18 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     minHeight: 430,
+    borderWidth: 1,
   },
   centeredContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white',
     borderRadius: 12,
     marginHorizontal: 16,
     marginVertical: 8,
     minHeight: 200,
+    borderWidth: 1,
   },
   loadingText: {
     marginTop: 12,
@@ -365,7 +392,6 @@ const styles = StyleSheet.create({
   emptyText: {
     marginTop: 12,
     fontSize: 16,
-    color: '#666',
     fontWeight: '600',
   },
   emptySubtext: {
@@ -380,7 +406,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
-    color: '#333',
   },
   headerRow: {
     flexDirection: 'row',
@@ -396,7 +421,6 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#444',
     textAlign: 'center',
   },
   row: {
@@ -405,7 +429,6 @@ const styles = StyleSheet.create({
     minHeight: 62,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#f5f5f5',
   },
   dataCell: {
     alignItems: 'center',
@@ -425,14 +448,12 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 11,
-    color: '#666',
     textTransform: 'uppercase',
     fontWeight: '600',
   },
   dateNumber: {
     fontSize: 13,
     fontWeight: 'bold',
-    color: '#333',
     marginTop: 2,
   },
   statusBadge: {

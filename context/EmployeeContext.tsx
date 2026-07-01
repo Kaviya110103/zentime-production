@@ -43,8 +43,8 @@ interface EmployeeContextType {
   adminClient: AdminClient | null;
   sessionType: 'employee' | 'admin' | null;
   authReady: boolean;
-  setEmployee: (emp: Employee | null) => void;
-  setAdminClient: (admin: AdminClient | null) => void;
+  setEmployee: (emp: Employee | null) => Promise<void>;
+  setAdminClient: (admin: AdminClient | null) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -53,8 +53,8 @@ export const EmployeeContext = createContext<EmployeeContextType>({
   adminClient: null,
   sessionType: null,
   authReady: false,
-  setEmployee: () => {},
-  setAdminClient: () => {},
+  setEmployee: async () => {},
+  setAdminClient: async () => {},
   logout: async () => {},
 });
 
@@ -116,20 +116,21 @@ export const EmployeeProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const setAdminClient = useCallback(async (admin: AdminClient | null) => {
     if (admin) {
+      setSessionType('admin');
+      setEmployeeState(null);
+      setAdminClientState(admin);
       await AsyncStorage.removeItem('employee');
       await AsyncStorage.multiSet([
         ['adminClient', JSON.stringify(admin)],
         ['sessionType', 'admin'],
       ]);
-      setSessionType('admin');
-      setEmployeeState(null);
     } else {
-      await AsyncStorage.removeItem('adminClient');
       if (sessionType === 'admin') {
         setSessionType(null);
       }
+      setAdminClientState(null);
+      await AsyncStorage.removeItem('adminClient');
     }
-    setAdminClientState(admin);
   }, [sessionType]);
 
   const logout = useCallback(async () => {

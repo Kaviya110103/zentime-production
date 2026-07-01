@@ -9,10 +9,12 @@ import BottomNavBar from "../components/BottomNavBar";
 import { EmployeeContext } from "../context/EmployeeContext";
 import { router, useLocalSearchParams } from 'expo-router';
 import { buildApiUrl, withClientId } from "../lib/api";
+import { useAppTheme } from "../context/AppThemeContext";
 
 const EmployeePermission = () => {
   const { recordId } = useLocalSearchParams();
   const { employee } = useContext(EmployeeContext);
+  const { colors, isDark } = useAppTheme();
   const employeeId = employee?.id;
 
   const [leaveType] = useState("permission");
@@ -134,7 +136,7 @@ const EmployeePermission = () => {
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
       <LinearGradient
         colors={['#7726B9', '#5E1D9E']}
         style={styles.header}
@@ -150,11 +152,11 @@ const EmployeePermission = () => {
         showsVerticalScrollIndicator={true}
       >
         <View style={styles.inputRow}>
-          <MaterialCommunityIcons name="calendar" size={30} color="purple" />
+          <MaterialCommunityIcons name="calendar" size={30} color={colors.primary} />
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Start Date <Text style={styles.required}>*</Text></Text>
+            <Text style={[styles.label, { color: colors.text }]}>Start Date <Text style={styles.required}>*</Text></Text>
             {Platform.OS === "web" ? (
-              <View style={styles.inputField}>
+              <View style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                 <input
                   type="date"
                   value={startDate ? toWebDateInputValue(startDate) : ""}
@@ -171,9 +173,9 @@ const EmployeePermission = () => {
             ) : (
               <TouchableOpacity
                 onPress={() => setShowDatePicker({ start: true })}
-                style={styles.inputField}
+                style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
               >
-                <Text style={[styles.inputText, startDate && styles.selectedText]}>
+                <Text style={[styles.inputText, { color: colors.mutedText }, startDate && styles.selectedText, startDate && { color: colors.text }]}>
                   {startDate ? formatDate(startDate) : "Select date"}
                 </Text>
               </TouchableOpacity>
@@ -197,11 +199,11 @@ const EmployeePermission = () => {
         </View>
 
         <View style={styles.inputRow}>
-          <MaterialCommunityIcons name="calendar" size={30} color="purple" />
+          <MaterialCommunityIcons name="calendar" size={30} color={colors.primary} />
           <View style={styles.inputContainer}>
-            <Text style={[styles.label, { color: '#9CA3AF' }]}>End Date <Text style={styles.autoFilled}>(Auto)</Text></Text>
-            <View style={[styles.inputField, styles.disabledField]}>
-              <Text style={[styles.inputText, { color: '#9CA3AF' }]}>
+            <Text style={[styles.label, { color: colors.mutedText }]}>End Date <Text style={[styles.autoFilled, { color: colors.primary }]}>(Auto)</Text></Text>
+            <View style={[styles.inputField, styles.disabledField, { backgroundColor: isDark ? '#111827' : '#F3F4F6', borderColor: colors.border }]}>
+              <Text style={[styles.inputText, { color: colors.mutedText }]}>
                 {endDate ? formatDate(endDate) : "Same as start date"}
               </Text>
             </View>
@@ -209,11 +211,11 @@ const EmployeePermission = () => {
         </View>
 
         <View style={styles.inputRow}>
-          <Feather name="clock" size={30} color="purple" />
+          <Feather name="clock" size={30} color={colors.primary} />
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Start Time <Text style={styles.required}>*</Text></Text>
+            <Text style={[styles.label, { color: colors.text }]}>Start Time <Text style={styles.required}>*</Text></Text>
             {Platform.OS === "web" ? (
-              <View style={styles.inputField}>
+              <View style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                 <input
                   type="time"
                   value={startTime ? toWebTimeInputValue(startTime) : ""}
@@ -228,9 +230,9 @@ const EmployeePermission = () => {
             ) : (
               <TouchableOpacity
                 onPress={() => setShowTimePicker({ ...showTimePicker, start: true })}
-                style={styles.inputField}
+                style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
               >
-                <Text style={[styles.inputText, startTime && styles.selectedText]}>
+                <Text style={[styles.inputText, { color: colors.mutedText }, startTime && styles.selectedText, startTime && { color: colors.text }]}>
                   {startTime ? formatTime(startTime) : "Select time"}
                 </Text>
               </TouchableOpacity>
@@ -250,11 +252,11 @@ const EmployeePermission = () => {
         </View>
 
         <View style={styles.inputRow}>
-          <Feather name="clock" size={30} color="purple" />
+          <Feather name="clock" size={30} color={colors.primary} />
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>End Time <Text style={styles.required}>*</Text></Text>
+            <Text style={[styles.label, { color: colors.text }]}>End Time <Text style={styles.required}>*</Text></Text>
             {Platform.OS === "web" ? (
-              <View style={styles.inputField}>
+              <View style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}>
                 <input
                   type="time"
                   value={endTime ? toWebTimeInputValue(endTime) : ""}
@@ -269,9 +271,9 @@ const EmployeePermission = () => {
             ) : (
               <TouchableOpacity
                 onPress={() => setShowTimePicker({ ...showTimePicker, end: true })}
-                style={styles.inputField}
+                style={[styles.inputField, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
               >
-                <Text style={[styles.inputText, endTime && styles.selectedText]}>
+                <Text style={[styles.inputText, { color: colors.mutedText }, endTime && styles.selectedText, endTime && { color: colors.text }]}>
                   {endTime ? formatTime(endTime) : "Select time"}
                 </Text>
               </TouchableOpacity>
@@ -291,12 +293,12 @@ const EmployeePermission = () => {
         </View>
 
         {startTime && endTime && (
-          <View style={styles.durationRow}>
+          <View style={[styles.durationRow, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.14)' : '#F5F0FF', borderColor: isDark ? 'rgba(139, 92, 246, 0.32)' : '#E9D5FF' }]}>
             <View style={styles.iconContainer}>
-              <Feather name="clock" size={30} color="blue" />
+              <Feather name="clock" size={30} color={colors.primary} />
             </View>
             <View style={styles.inputContainer}>
-              <Text style={styles.durationText}>
+              <Text style={[styles.durationText, { color: isDark ? '#c4b5fd' : '#7726B9' }]}>
                 Duration: {getTimeDifference(startTime, endTime)}
               </Text>
             </View>
@@ -304,17 +306,17 @@ const EmployeePermission = () => {
         )}
 
         <View style={styles.inputRow}>
-          <Feather name="file-text" size={30} color="purple" />
+          <Feather name="file-text" size={30} color={colors.primary} />
           <View style={styles.inputContainer}>
-            <Text style={styles.label}>Reason <Text style={styles.optional}>(Optional)</Text>  <Text style={styles.characterCount}>{reason.length}/500</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Reason <Text style={styles.optional}>(Optional)</Text>  <Text style={[styles.characterCount, { color: colors.mutedText }]}>{reason.length}/500</Text>
             </Text>
 
             <TextInput
-              style={[styles.inputField, styles.textArea]}
+              style={[styles.inputField, styles.textArea, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border, color: colors.text }]}
               value={reason}
               onChangeText={setReason}
               placeholder="Describe the reason for your permission request..."
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.mutedText}
               multiline
               numberOfLines={4}
               textAlignVertical="top"
@@ -345,10 +347,10 @@ const EmployeePermission = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        <View style={styles.helpRow}>
-          <Feather name="check-circle" size={30} color="green" />
+        <View style={[styles.helpRow, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.14)' : '#F5F3FF', borderColor: isDark ? 'rgba(139, 92, 246, 0.32)' : '#DDD6FE' }]}>
+          <Feather name="check-circle" size={30} color={isDark ? '#86efac' : 'green'} />
           <View style={styles.inputContainer}>
-            <Text style={styles.helpText}>
+            <Text style={[styles.helpText, { color: isDark ? '#c4b5fd' : '#7726B9' }]}>
               Your permission request will be reviewed by HR and you'll receive a notification once approved.
             </Text>
           </View>

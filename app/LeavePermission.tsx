@@ -13,12 +13,14 @@ import { router, useLocalSearchParams, useRouter } from 'expo-router';
 import { EmployeeContext } from "../context/EmployeeContext";
 import { buildApiUrl, withClientId } from "../lib/api";
 import { APP_FONT_FAMILY } from '../lib/typography';
+import { useAppTheme } from '../context/AppThemeContext';
 
 const LeavePermission = () => {
 
   const router = useRouter();
 const { employeeId } = useLocalSearchParams();
 const { employee, setEmployee, logout } = useContext(EmployeeContext);
+const { colors, isDark } = useAppTheme();
 const companyCode = employee?.companyCode;  // 👈 get companyCode here
   // const employeeId = employee?.id;
   const [leaveType, setLeaveType] = useState(null);
@@ -128,12 +130,12 @@ useEffect(() => {
   };
 
   return (
-     <SafeAreaView style={{ flex: 1 }}>
+     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <View style={styles.mainContainer}>
+        <View style={[styles.mainContainer, { backgroundColor: colors.background }]}>
           {/* Header */}
           <LinearGradient
             colors={['#7726B9', '#351153']}
@@ -145,10 +147,10 @@ useEffect(() => {
           </LinearGradient>
 
           {/* DropDownPicker outside ScrollView (IMPORTANT) */}
-          <View style={[styles.card, { zIndex: 2000 }]}>
+          <View style={[styles.card, { zIndex: 2000, backgroundColor: colors.surface, borderColor: colors.border }]}>
             <View style={styles.cardHeader}>
-      <Feather name="file-text" size={25} color="black" />
-              <Text style={styles.cardTitle}>Leave Type</Text>
+      <Feather name="file-text" size={25} color={colors.primary} />
+              <Text style={[styles.cardTitle, { color: colors.text }]}>Leave Type</Text>
               <Text style={styles.required}>*</Text>
             </View>
             <DropDownPicker
@@ -158,11 +160,11 @@ useEffect(() => {
               setOpen={setOpenDropdown}
               setValue={setLeaveType}
               setItems={setLeaveItems}
-              style={styles.dropdown}
-              dropDownContainerStyle={styles.dropdownContainer}
+              style={[styles.dropdown, { backgroundColor: isDark ? '#0b1220' : '#ffffff', borderColor: colors.border }]}
+              dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}
               placeholder="Choose your leave type"
-              placeholderStyle={styles.placeholderStyle}
-              textStyle={styles.dropdownText}
+              placeholderStyle={[styles.placeholderStyle, { color: colors.mutedText }]}
+              textStyle={[styles.dropdownText, { color: colors.text }]}
               listMode="SCROLLVIEW" // Prevent VirtualizedList nesting
             />
           </View>
@@ -175,7 +177,7 @@ useEffect(() => {
           >
             {/* Employee ID Warning */}
             {(!employeeId ) && (
-              <View style={styles.warningBox}>
+              <View style={[styles.warningBox, { backgroundColor: isDark ? 'rgba(245, 158, 11, 0.14)' : '#FFF3CD', borderColor: isDark ? 'rgba(245, 158, 11, 0.35)' : '#FFEEBA' }]}>
                 <Text style={styles.warningText}>
                   ⚠️ Employee ID is missing. Please login again or contact admin.
                 </Text>
@@ -185,10 +187,10 @@ useEffect(() => {
             {/* Date Pickers */}
             <View style={styles.dateRow}>
               {/* Start Date */}
-              <View style={[styles.card, styles.dateCard]}>
+              <View style={[styles.card, styles.dateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.cardHeader}>
-<MaterialCommunityIcons name="calendar" size={25} color="purple" />
-                  <Text style={styles.cardTitle}>Start Date</Text>
+<MaterialCommunityIcons name="calendar" size={25} color={colors.primary} />
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>Start Date</Text>
                   <Text style={styles.required}>*</Text>
                 </View>
                 {Platform.OS === "web" ? (
@@ -217,9 +219,9 @@ useEffect(() => {
                 ) : (
                   <TouchableOpacity
                     onPress={() => setShowStartPicker(true)}
-                    style={styles.dateButton}
+                    style={[styles.dateButton, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
                   >
-                    <Text style={[styles.dateText, startDate && styles.dateTextSelected]}>
+                    <Text style={[styles.dateText, { color: colors.mutedText }, startDate && styles.dateTextSelected, startDate && { color: colors.text }]}>
                       {startDate ? formatDate(startDate) : "Select date"}
                     </Text>
                   </TouchableOpacity>
@@ -239,10 +241,10 @@ useEffect(() => {
               </View>
 
               {/* End Date */}
-              <View style={[styles.card, styles.dateCard]}>
+              <View style={[styles.card, styles.dateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
                 <View style={styles.cardHeader}>
-                <MaterialCommunityIcons name="calendar" size={25} color="purple" />
-                  <Text style={styles.cardTitle}>End Date</Text>
+                <MaterialCommunityIcons name="calendar" size={25} color={colors.primary} />
+                  <Text style={[styles.cardTitle, { color: colors.text }]}>End Date</Text>
                   <Text style={styles.required}>*</Text>
                 </View>
                 {Platform.OS === "web" ? (
@@ -268,9 +270,9 @@ useEffect(() => {
                 ) : (
                   <TouchableOpacity
                     onPress={() => setShowEndPicker(true)}
-                    style={styles.dateButton}
+                    style={[styles.dateButton, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border }]}
                   >
-                    <Text style={[styles.dateText, endDate && styles.dateTextSelected]}>
+                    <Text style={[styles.dateText, { color: colors.mutedText }, endDate && styles.dateTextSelected, endDate && { color: colors.text }]}>
                       {endDate ? formatDate(endDate) : "Select date"}
                     </Text>
                   </TouchableOpacity>
@@ -292,33 +294,33 @@ useEffect(() => {
 
             {/* Duration */}
             {startDate && endDate && (
-              <View style={styles.durationCard}>
-                      <Feather name="clock" size={25} color="blue" />
+              <View style={[styles.durationCard, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.14)' : '#F3F0FF', borderColor: isDark ? 'rgba(139, 92, 246, 0.32)' : '#D8B4FE' }]}>
+                      <Feather name="clock" size={25} color={colors.primary} />
 
-                <Text style={styles.durationText}>
+                <Text style={[styles.durationText, { color: isDark ? '#c4b5fd' : '#7726B9' }]}>
                   Duration: {getDaysBetween(startDate, endDate)} day{getDaysBetween(startDate, endDate) > 1 ? 's' : ''}
                 </Text>
               </View>
             )}
 
             {/* Reason */}
-            <View style={styles.card}>
+            <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               <View style={styles.cardHeader}>
-                 <Feather name="file-text" size={25} color="black" />
-                <Text style={styles.cardTitle}>Reason</Text>
+                 <Feather name="file-text" size={25} color={colors.primary} />
+                <Text style={[styles.cardTitle, { color: colors.text }]}>Reason</Text>
                 <Text style={styles.optional}>(Optional)</Text>
               </View>
               <TextInput
-                style={styles.textArea}
+                style={[styles.textArea, { backgroundColor: isDark ? '#0b1220' : '#F9FAFB', borderColor: colors.border, color: colors.text }]}
                 value={reason}
                 onChangeText={setReason}
                 placeholder="Describe the reason for your leave request..."
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor={colors.mutedText}
                 multiline
                 numberOfLines={4}
                 textAlignVertical="top"
               />
-              <Text style={styles.characterCount}>{reason.length}/500</Text>
+              <Text style={[styles.characterCount, { color: colors.mutedText }]}>{reason.length}/500</Text>
             </View>
 
             {/* Submit Button */}
@@ -347,9 +349,9 @@ useEffect(() => {
             </TouchableOpacity>
 
             {/* Help */}
-            <View style={styles.helpCard}>
-              <Feather name="check-circle" size={25} color="green" />
-              <Text style={styles.helpText}>
+            <View style={[styles.helpCard, { backgroundColor: isDark ? 'rgba(139, 92, 246, 0.14)' : '#F3F0FF', borderColor: isDark ? 'rgba(139, 92, 246, 0.32)' : '#D8B4FE' }]}>
+              <Feather name="check-circle" size={25} color={isDark ? '#86efac' : 'green'} />
+              <Text style={[styles.helpText, { color: isDark ? '#c4b5fd' : '#7726B9' }]}>
                 Your request will be reviewed by Admin and you'll receive a notification once approved.
               </Text>
             </View>

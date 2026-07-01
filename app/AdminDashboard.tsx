@@ -53,6 +53,7 @@ type LeaveRequest = {
 type MissedTimeout = {
   attendanceId: number;
   firstName?: string;
+  lastName?: string;
   mobile?: string;
   branch?: string;
   position?: string;
@@ -107,6 +108,17 @@ function getApiErrorMessage(error: any, fallback: string): string {
   return fallback;
 }
 
+function formatPersonName(
+  person?: { firstName?: string; lastName?: string; name?: string } | null,
+  fallback = "Employee"
+): string {
+  const fullName = [person?.firstName, person?.lastName]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .join(" ");
+  return fullName || String(person?.name || "").trim() || fallback;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { adminClient, sessionType, authReady, logout } = useContext(EmployeeContext);
@@ -115,6 +127,7 @@ export default function AdminDashboard() {
   const isAdminSession = sessionType === "admin" && Boolean(adminClient);
 
   const [loading, setLoading] = useState(true);
+  const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [activeModule, setActiveModule] = useState<ModuleKey>("dashboard");
 
@@ -250,42 +263,65 @@ export default function AdminDashboard() {
     return () => subscription.remove();
   }, [activeModule]);
 
-  const fetchDashboardData = useCallback(async () => {
-    if (!clientId) return;
+  const fetchDashboardData = useCallback(async (showLoader = false) => {
+    if (!clientId) {
+      setLoading(false);
+      setAttendanceLoading(false);
+      setRefreshing(false);
+      return;
+    }
+    if (showLoader) {
+      setLoading(true);
+    }
+    setAttendanceLoading(true);
     try {
-      const [summaryRes, employeesRes, todayTimeInRes, lateRes, absentRes, leavesRes, missedRes] =
-        await Promise.all([
-          axios.get(buildApiUrl("/api/attendance/summary", { clientId })),
-          axios.get(buildApiUrl("/api/employees", { clientId })),
-          axios.get(buildApiUrl("/api/attendance/today-timein", { clientId })),
-          axios.get(buildApiUrl("/api/attendance/today-time-in-late", { clientId })),
-          axios.get(buildApiUrl("/api/attendance/today-absent", { clientId })),
-          axios.get(buildApiUrl("/api/leaves/all", { clientId })),
-          axios.get(buildApiUrl("/api/attendance/missed-timeout", { clientId })),
-        ]);
+      const attendanceTasks = [
+        axios
+          .get(buildApiUrl("/api/attendance/today-timein", { clientId }))
+          .then((res) => setPresentRows(Array.isArray(res.data) ? res.data : [])),
+        axios
+          .get(buildApiUrl("/api/attendance/today-time-in-late", { clientId }))
+          .then((res) => setLateRows(Array.isArray(res.data) ? res.data : [])),
+        axios
+          .get(buildApiUrl("/api/attendance/today-absent", { clientId }))
+          .then((res) => setAbsentRows(Array.isArray(res.data) ? res.data : [])),
+      ];
+      const otherTasks = [
+        axios
+          .get(buildApiUrl("/api/attendance/summary", { clientId }))
+          .then((res) => setSummary(res.data || {})),
+        axios
+          .get(buildApiUrl("/api/employees", { clientId }))
+          .then((res) => setEmployees(Array.isArray(res.data) ? res.data : [])),
+        axios
+          .get(buildApiUrl("/api/leaves/all", { clientId }))
+          .then((res) => setLeaves(Array.isArray(res.data) ? res.data : [])),
+        axios
+          .get(buildApiUrl("/api/attendance/missed-timeout", { clientId }))
+          .then((res) => setMissedTimeouts(Array.isArray(res.data) ? res.data : [])),
+      ];
 
-      const lateList: EmployeeRow[] = Array.isArray(lateRes.data) ? lateRes.data : [];
-      const presentList: EmployeeRow[] = Array.isArray(todayTimeInRes.data) ? todayTimeInRes.data : [];
-
-      setSummary(summaryRes.data || {});
-      setEmployees(Array.isArray(employeesRes.data) ? employeesRes.data : []);
-      setPresentRows(presentList);
-      setLateRows(lateList);
-      setAbsentRows(Array.isArray(absentRes.data) ? absentRes.data : []);
-      setLeaves(Array.isArray(leavesRes.data) ? leavesRes.data : []);
-      setMissedTimeouts(Array.isArray(missedRes.data) ? missedRes.data : []);
+      const attendanceResults = await Promise.allSettled(attendanceTasks);
+      setAttendanceLoading(false);
+      const otherResults = await Promise.allSettled(otherTasks);
+      const results = [...attendanceResults, ...otherResults];
+      const failedCount = results.filter((result) => result.status === "rejected").length;
+      if (failedCount > 0) {
+        console.warn(`Admin dashboard loaded with ${failedCount} failed request(s).`);
+      }
     } catch (error) {
       console.error("Admin dashboard load failed", error);
       Alert.alert("Error", "Failed to load admin dashboard data.");
     } finally {
       setLoading(false);
+      setAttendanceLoading(false);
       setRefreshing(false);
     }
   }, [clientId]);
 
   useEffect(() => {
     if (!clientId || !isAdminSession) return;
-    fetchDashboardData();
+    fetchDashboardData(true);
   }, [clientId, isAdminSession, fetchDashboardData]);
 
   useEffect(() => {
@@ -323,6 +359,44 @@ export default function AdminDashboard() {
     setRefreshing(true);
     fetchDashboardData();
   };
+
+  const employeeLookup = useMemo(() => {
+    const byId = new Map<string, EmployeeRow>();
+    const byNameAndBranch = new Map<string, EmployeeRow>();
+    employees.forEach((employee) => {
+      const id = employee.id ?? employee.employeeId;
+      if (id != null) {
+        byId.set(String(id), employee);
+      }
+      const firstName = String(employee.firstName || employee.name || "").trim().toLowerCase();
+      const branch = String(employee.branch || "").trim().toLowerCase();
+      if (firstName) {
+        byNameAndBranch.set(`${firstName}|${branch}`, employee);
+      }
+    });
+    return { byId, byNameAndBranch };
+  }, [employees]);
+
+  const formatAdminEmployeeName = useCallback(
+    (row: EmployeeRow, fallback: string) => {
+      const id = row.id ?? row.employeeId;
+      const directoryMatch =
+        id != null
+          ? employeeLookup.byId.get(String(id))
+          : employeeLookup.byNameAndBranch.get(
+              `${String(row.firstName || row.name || "").trim().toLowerCase()}|${String(row.branch || "").trim().toLowerCase()}`
+            );
+      return formatPersonName(
+        {
+          firstName: row.firstName || directoryMatch?.firstName,
+          lastName: row.lastName || directoryMatch?.lastName,
+          name: row.name || directoryMatch?.name,
+        },
+        fallback
+      );
+    },
+    [employeeLookup]
+  );
 
   const leaveRequestsByTabAndStatus = useMemo(() => {
     let filtered = [...leaves];
@@ -488,8 +562,6 @@ export default function AdminDashboard() {
   );
 
   const renderDashboardCards = () => {
-    const companyName = adminClient?.companyName || adminClient?.username || "Admin";
-    const displayName = adminClient?.username || companyName || "Admin";
     const greeting = getGreetingLabel(new Date().getHours());
     const pendingRequests = leaves.filter((item) => String(item.status || "").toLowerCase() === "pending").length;
     const cards = [
@@ -562,7 +634,6 @@ export default function AdminDashboard() {
             <View style={styles.templateHeroRow}>
               <View>
                 <Text style={styles.templateHeroTitle}>Admin Dashboard</Text>
-                <Text style={styles.templateHeroSubtitle}>{companyName}</Text>
               </View>
               <TouchableOpacity
                 style={[
@@ -623,8 +694,7 @@ export default function AdminDashboard() {
 
         <View style={styles.greetingRow}>
           <View style={styles.greetingTextBlock}>
-            <Text style={[styles.greetingTitle, { color: colors.text }]}>{greeting}, {displayName}</Text>
-            <Text style={[styles.greetingSubtitle, { color: colors.mutedText }]}>Here's what's happening today.</Text>
+            <Text style={[styles.greetingTitle, { color: colors.text }]}>{greeting}</Text>
           </View>
           <TouchableOpacity
             style={[styles.notificationButton, isDark && { backgroundColor: colors.surface, borderColor: colors.border }]}
@@ -670,7 +740,7 @@ export default function AdminDashboard() {
       ) : (
         employees.map((row, idx) =>
           renderListItem(
-            row.firstName || row.name || `Employee ${idx + 1}`,
+            formatAdminEmployeeName(row, `Employee ${idx + 1}`),
             `Branch: ${row.branch || "-"}`,
             `Mobile: ${row.mobile || "-"}`
           )
@@ -682,12 +752,14 @@ export default function AdminDashboard() {
   const renderOnTime = () => (
     <>
       {renderHeader("Present Employees")}
-      {presentRows.length === 0 ? (
+      {attendanceLoading ? (
+        <ActivityIndicator size="small" color={colors.primary} style={styles.inlineLoader} />
+      ) : presentRows.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.mutedText }]}>No present records for today.</Text>
       ) : (
         presentRows.map((row, idx) =>
           renderListItem(
-            row.name || row.firstName || `Employee ${idx + 1}`,
+            formatAdminEmployeeName(row, `Employee ${idx + 1}`),
             `Branch: ${row.branch || "-"}`,
             `Time In: ${formatDisplayTime(row.timeIn)}`
           )
@@ -744,11 +816,13 @@ export default function AdminDashboard() {
           ))}
         </View>
 
-        {rows.length === 0 ? (
+        {attendanceLoading ? (
+          <ActivityIndicator size="small" color={colors.primary} style={styles.inlineLoader} />
+        ) : rows.length === 0 ? (
           <Text style={[styles.emptyText, { color: colors.mutedText }]}>{emptyMessage}</Text>
         ) : (
           rows.map((row, idx) => {
-            const name = row.name || row.firstName || `Employee ${idx + 1}`;
+            const name = formatAdminEmployeeName(row, `Employee ${idx + 1}`);
             if (attendanceFilter === "present") {
               return renderListItem(
                 name,
@@ -777,12 +851,14 @@ export default function AdminDashboard() {
   const renderAbsent = () => (
     <>
       {renderHeader("Absent Employees")}
-      {absentRows.length === 0 ? (
+      {attendanceLoading ? (
+        <ActivityIndicator size="small" color={colors.primary} style={styles.inlineLoader} />
+      ) : absentRows.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.mutedText }]}>No absent records for today.</Text>
       ) : (
         absentRows.map((row, idx) =>
           renderListItem(
-            row.name || row.firstName || `Employee ${idx + 1}`,
+            formatAdminEmployeeName(row, `Employee ${idx + 1}`),
             `Branch: ${row.branch || "-"}`,
             `Mobile: ${row.mobile || "-"}`
           )
@@ -794,12 +870,14 @@ export default function AdminDashboard() {
   const renderLate = () => (
     <>
       {renderHeader("Late Arrival")}
-      {lateRows.length === 0 ? (
+      {attendanceLoading ? (
+        <ActivityIndicator size="small" color={colors.primary} style={styles.inlineLoader} />
+      ) : lateRows.length === 0 ? (
         <Text style={[styles.emptyText, { color: colors.mutedText }]}>No late arrivals for today.</Text>
       ) : (
         lateRows.map((row, idx) =>
           renderListItem(
-            row.name || row.firstName || `Employee ${idx + 1}`,
+            formatAdminEmployeeName(row, `Employee ${idx + 1}`),
             `Branch: ${row.branch || "-"}`,
             `Late Minutes: ${row.lateMinutes ?? 0}`
           )
@@ -887,7 +965,7 @@ export default function AdminDashboard() {
             ]}
           >
             <Text style={[styles.cardTitle, { color: colors.text }]}>
-              {item.employee?.firstName || "Employee"}
+              {formatPersonName(item.employee)}
             </Text>
             <Text style={[styles.cardText, { color: colors.mutedText }]}>Type: {item.leaveType || "-"}</Text>
             <Text style={[styles.cardText, { color: colors.mutedText }]}>
@@ -939,7 +1017,7 @@ export default function AdminDashboard() {
               isDark && { backgroundColor: colors.surface, borderColor: colors.border },
             ]}
           >
-            <Text style={[styles.cardTitle, { color: colors.text }]}>{item.firstName || "Employee"}</Text>
+            <Text style={[styles.cardTitle, { color: colors.text }]}>{formatPersonName(item)}</Text>
             <Text style={[styles.cardText, { color: colors.mutedText }]}>Date: {item.date || "-"}</Text>
             <Text style={[styles.cardText, { color: colors.mutedText }]}>Branch: {item.branch || "-"}</Text>
             <Text style={[styles.cardText, { color: colors.mutedText }]}>Reason: {item.timeoutReason || "-"}</Text>
@@ -1005,7 +1083,7 @@ export default function AdminDashboard() {
             >
               <Text style={[styles.modalTitle, { color: colors.primary }]}>Complete Clock-Out Request</Text>
               <Text style={[styles.modalText, { color: colors.text }]}>
-                Employee: {selectedMissedTimeout?.firstName || "-"}
+                Employee: {formatPersonName(selectedMissedTimeout, "-")}
               </Text>
               <Text style={[styles.modalText, { color: colors.text }]}>Date: {selectedMissedTimeout?.date || "-"}</Text>
 
@@ -1449,6 +1527,9 @@ const styles = StyleSheet.create({
   emptyText: {
     color: "#666",
     marginTop: 8,
+  },
+  inlineLoader: {
+    marginTop: 18,
   },
   emptyTextSmall: {
     color: "#7A7685",
