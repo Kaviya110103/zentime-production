@@ -40,15 +40,18 @@ public class SchemaMaintenanceService {
         }
 
         try {
-            Flyway.configure()
+            Flyway flyway = Flyway.configure()
                     .dataSource(dataSource)
                     .locations("classpath:db/migration")
                     .baselineOnMigrate(true)
                     .baselineVersion("0")
                     .validateMigrationNaming(true)
                     .outOfOrder(false)
-                    .load()
-                    .migrate();
+                    .load();
+            if (hasFailedEmploymentStatusMigration()) {
+                flyway.repair();
+            }
+            flyway.migrate();
             migratedSchemas.put(dbName, Boolean.TRUE);
         } catch (RuntimeException ex) {
             migratedSchemas.remove(dbName);
@@ -61,6 +64,21 @@ public class SchemaMaintenanceService {
             return jdbcTemplate.queryForObject("SELECT DATABASE()", String.class);
         } catch (Exception ex) {
             return null;
+        }
+    }
+
+    private boolean hasFailedEmploymentStatusMigration() {
+        try {
+            Integer count = jdbcTemplate.queryForObject("""
+                    SELECT COUNT(*)
+                    FROM flyway_schema_history
+                    WHERE version = '8'
+                      AND description = 'add employee employment status'
+                      AND success = 0
+                    """, Integer.class);
+            return count != null && count > 0;
+        } catch (Exception ex) {
+            return false;
         }
     }
 }
