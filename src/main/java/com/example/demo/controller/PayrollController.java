@@ -59,6 +59,35 @@ public class PayrollController {
     @Autowired
     private PayslipPdfService payslipPdfService;
 
+    /**
+     * Supplies the employee selector used by the admin payroll screen.
+     * Keep this response intentionally small because the page only needs
+     * identity and employment details to choose a payroll recipient.
+     */
+    @GetMapping("/employees")
+    public ResponseEntity<List<Map<String, Object>>> getPayrollEmployees(
+            @RequestParam("clientId") Long clientId,
+            @RequestParam(value = "branch", required = false) String branch) {
+        List<Map<String, Object>> response = employeeRepository.findByClientId(clientId).stream()
+                .filter(employee -> branch == null || branch.isBlank()
+                        || branch.trim().equalsIgnoreCase(employee.getBranch()))
+                .map(employee -> {
+                    Map<String, Object> item = new HashMap<>();
+                    item.put("id", employee.getId());
+                    item.put("employeeId", employee.getId());
+                    item.put("employeeCode", employee.getEmployeeCode());
+                    item.put("firstName", employee.getFirstName());
+                    item.put("lastName", employee.getLastName());
+                    item.put("branch", employee.getBranch());
+                    item.put("position", employee.getPosition());
+                    return item;
+                })
+                .sorted((left, right) -> String.valueOf(left.getOrDefault("firstName", ""))
+                        .compareToIgnoreCase(String.valueOf(right.getOrDefault("firstName", ""))))
+                .toList();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/month-payroll")
     public ResponseEntity<?> calculateMonthPayroll(
             @RequestParam("employeeId") Long employeeId,

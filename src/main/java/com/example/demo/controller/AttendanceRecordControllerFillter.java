@@ -261,6 +261,61 @@ public class AttendanceRecordControllerFillter {
         return record;
     }
 
+    /**
+     * Compatibility endpoint for the admin attendance screen.  This keeps
+     * filtering scoped to the requested client and returns the same compact
+     * record shape as the existing attendance endpoints.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<?> searchAttendanceRecords(
+            @RequestParam(value = "clientId", required = false) Long clientId,
+            @RequestParam(value = "employeeId", required = false) String employeeRef,
+            @RequestParam(value = "branch", required = false) String branch,
+            @RequestParam(value = "date", required = false) String date,
+            @RequestParam(value = "month", required = false) Integer month,
+            @RequestParam(value = "year", required = false) Integer year,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "500") int limit) {
+        try {
+            int safePage = Math.max(0, page);
+            int safeLimit = Math.max(1, Math.min(limit, 5000));
+            Optional<Employee> selectedEmployee = employeeRef == null || employeeRef.isBlank()
+                    ? Optional.empty()
+                    : resolveEmployeeByRef(employeeRef);
+            if (employeeRef != null && !employeeRef.isBlank() && selectedEmployee.isEmpty()) {
+                return ResponseEntity.ok(List.of());
+            }
+
+            List<AttendanceRecord> records = clientId == null
+                    ? attendanceRecordRepository.findByOrderByIdDesc(PageRequest.of(safePage, safeLimit))
+                    : attendanceRecordRepository.findByEmployee_ClientIdOrderByIdDesc(
+                            clientId, PageRequest.of(safePage, safeLimit));
+
+            List<Map<String, Object>> response = records.stream()
+                    .filter(record -> selectedEmployee.isEmpty()
+                            || (record.getEmployee() != null
+                            && selectedEmployee.get().getId().equals(record.getEmployee().getId())))
+                    .filter(record -> branch == null || branch.isBlank()
+                            || (record.getEmployee() != null
+                            && branch.trim().equalsIgnoreCase(record.getEmployee().getBranch())))
+                    .filter(record -> date == null || date.isBlank()
+                            || (parseFlexibleDate(date) != null
+                            && parseFlexibleDate(date).equals(parseFlexibleDate(record.getDate()))))
+                    .filter(record -> month == null || year == null || isRecordInMonth(record, month, year))
+                    .filter(record -> status == null || status.isBlank()
+                            || status.trim().equalsIgnoreCase(record.getAttendanceStatus())
+                            || status.trim().equalsIgnoreCase(record.getDayStatus()))
+                    .map(this::toAttendanceRecordMap)
+                    .toList();
+            return ResponseEntity.ok(response);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            return ResponseEntity.internalServerError()
+                    .body(Map.of("message", "Unable to search attendance records."));
+        }
+    }
+
     // 2. Get attendance details by employee ID
     @GetMapping("/by-employee")
     public List<AttendanceRecord> getAttendanceByEmployeeId(
