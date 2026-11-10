@@ -8,7 +8,7 @@ import java.sql.Statement;
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 
-public class V2__add_employee_employment_status extends BaseJavaMigration {
+public class V20261110_1__add_employee_employment_status extends BaseJavaMigration {
 
     @Override
     public void migrate(Context context) throws Exception {
