@@ -34,6 +34,7 @@ jobs:
 
       - name: Build admin application
         env:
+          CI: "false"
           REACT_APP_API_BASE_URL: https://iie.zentime.co.in
         run: npm run build
 
