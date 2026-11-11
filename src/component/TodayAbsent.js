@@ -4,7 +4,6 @@ import { styled } from "@mui/material/styles";
 import { API_BASE_URL, API_REQUEST_TIMEOUT_MS } from "../config/api";
 import { fetchBranchesFromLocationSet } from "../utils/branchSource";
 
-const DASHBOARD_MODAL_TIMEOUT_MS = Math.min(API_REQUEST_TIMEOUT_MS, 8000);
 import {
   FilterList,
   Check,
@@ -23,6 +22,8 @@ import {
   useMediaQuery,
   useTheme,
 } from "@mui/material";
+
+const DASHBOARD_MODAL_TIMEOUT_MS = Math.min(API_REQUEST_TIMEOUT_MS, 8000);
 
 const safelyParseJson = (value) => {
   if (!value || typeof value !== "string") return null;
